@@ -15,7 +15,6 @@
   {{ 'component-slider.css' | asset_url | stylesheet_tag }}
   {{ 'component-rating.css' | asset_url | stylesheet_tag }}
   {{ 'component-deferred-media.css' | asset_url | stylesheet_tag }}
-{{ 'component-quick-order-list.css' | asset_url | stylesheet_tag }}
 
   {% unless product.has_only_default_variant %}
     {{ 'component-product-variant-picker.css' | asset_url | stylesheet_tag }}
@@ -42,7 +41,6 @@
 
   <script src="{{ 'product-info.js' | asset_url }}" defer="defer"></script>
   <script src="{{ 'product-form.js' | asset_url }}" defer="defer"></script>
-<script src="{{ 'quick-order-list.js' | asset_url }}" defer="defer"></script>
   {%- if product.quantity_price_breaks_configured? -%}
     <script src="{{ 'show-more.js' | asset_url }}" defer="defer"></script>
     <script src="{{ 'price-per-item.js' | asset_url }}" defer="defer"></script>
@@ -98,107 +96,6 @@
                 >
                   {{- block.settings.text -}}
                 </p>
-{%- when 'quick_order' -%}
-  {%- liquid
-    # Calculate cart quantities for product variants
-    assign items_in_cart = cart | line_items_for: product | sum: 'quantity'
-  -%}
-  <div class="quick-order-list-container color-{{ section.settings.color_scheme }} gradient"
-    {{ block.shopify_attributes }}>
-    <quick-order-list
-      class="page-width"
-      id="{{ section.id }}-{{ product.id }}"
-      data-section="{{ section.id }}"
-      data-product-id="{{ product.id }}"
-      data-url="{{ product.url }}"
-    >
-      <form
-        action="{{ routes.cart_update_url }}"
-        class="quick-order-list__contents critical-hidden"
-        method="post"
-        id="QuickOrderList-{{ block.id }}"
-      >
-        <div class="quick-order-list__container" id="main-variant-items">
-          <div class="js-contents">
-            <table class="quick-order-list__table">
-              <caption class="visually-hidden">{{ 'sections.cart.title' | t }}</caption>
-              <thead>
-                <tr>
-                  <th class="caption-with-letter-spacing" scope="col">
-                    {%- if product.has_only_default_variant -%}
-                      {{ 'sections.quick_order_list.product' | t }}
-                    {%- else -%}
-                      {{ 'sections.quick_order_list.variant' | t }}
-                    {%- endif -%}
-                  </th>
-                  {% if block.settings.show_quantity %}
-                    <th class="quick-order-list__table-heading--wide caption-with-letter-spacing" scope="col">
-                      {{ 'products.product.quantity.label' | t }}
-                    </th>
-                  {% endif %}
-                  {% if block.settings.show_price %}
-                    <th class="quick-order-list__table-heading--wide caption-with-letter-spacing" scope="col">
-                      {{ 'sections.cart.headings.price' | t }}
-                    </th>
-                  {% endif %}
-                </tr>
-              </thead>
-
-              <tbody>
-                {%- if product.has_only_default_variant -%}
-                  {%- render 'quick-order-list-row',
-                    item: product,
-                    image: product.featured_media,
-                    sku: product.selected_or_first_available_variant.sku,
-                    variant: product.selected_or_first_available_variant,
-                    show_image: block.settings.show_image,
-                    show_sku: block.settings.show_sku
-                  -%}
-                {%- else -%}
-                  {%- for variant in product.variants -%}
-                    {%- render 'quick-order-list-row',
-                      item: variant,
-                      image: variant.image,
-                      sku: variant.sku,
-                      variant: variant,
-                      show_image: block.settings.show_image,
-                      show_sku: block.settings.show_sku
-                    -%}
-                  {%- endfor -%}
-                {%- endif -%}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {% if block.settings.show_totals %}
-          <div class="quick-order-list__total gradient">
-            <div class="quick-order-list-total__info">
-              <div class="quick-order-list__total-items">
-                <span>{{ items_in_cart }}</span>
-                <p class="h5">{{ 'sections.quick_order_list.total_items' | t }}</p>
-              </div>
-              <div class="quick-order-list-total__price">
-                <div class="totals__product-total">
-                  <span class="totals__subtotal-value">
-                    {{ cart | line_items_for: product | sum: 'original_line_price' | money }}
-                  </span>
-                  <p class="totals__subtotal h5">{{ 'sections.quick_order_list.product_total' | t }}</p>
-                </div>
-              </div>
-              {% if block.settings.show_cart_actions %}
-                <div class="quick-order-list-buttons">
-                  <a href="{{ routes.cart_url }}" class="quick-order-list__button button button--secondary">
-                    <span>{{- 'sections.quick_order_list.view_cart' | t -}}</span>
-                  </a>
-                </div>
-              {% endif %}
-            </div>
-          </div>
-        {% endif %}
-      </form>
-    </quick-order-list>
-  </div>
               {%- when 'title' -%}
                 <div class="product__title" {{ block.shopify_attributes }}>
                   <h1>{{ product.title | escape }}</h1>
@@ -846,50 +743,6 @@
           "default": "t:sections.main-product.blocks.text.settings.text.default",
           "label": "t:sections.main-product.blocks.text.settings.text.label"
         },
-{
-  "type": "quick_order",
-  "name": "t:sections.main-product.blocks.quick_order.name",
-  "limit": 1,
-  "settings": [
-    {
-      "type": "checkbox",
-      "id": "show_image",
-      "label": "t:sections.main-product.blocks.quick_order.settings.show_image.label",
-      "default": true
-    },
-    {
-      "type": "checkbox",
-      "id": "show_sku",
-      "label": "t:sections.main-product.blocks.quick_order.settings.show_sku.label",
-      "default": false
-    },
-    {
-      "type": "checkbox",
-      "id": "show_quantity",
-      "label": "t:sections.main-product.blocks.quick_order.settings.show_quantity.label",
-      "default": true
-    },
-    {
-      "type": "checkbox",
-      "id": "show_price",
-      "label": "t:sections.main-product.blocks.quick_order.settings.show_price.label",
-      "default": true
-    },
-    {
-      "type": "checkbox",
-      "id": "show_totals",
-      "label": "t:sections.main-product.blocks.quick_order.settings.show_totals.label",
-      "default": true
-    },
-    {
-      "type": "checkbox",
-      "id": "show_cart_actions",
-      "label": "t:sections.main-product.blocks.quick_order.settings.show_cart_actions.label",
-      "default": true,
-      "info": "t:sections.main-product.blocks.quick_order.settings.show_cart_actions.info"
-    }
-  ]
-},
         {
           "type": "select",
           "id": "text_style",
